@@ -1,0 +1,34 @@
+package com.slotswapper.backend.service;
+
+
+
+import com.slotswapper.backend.model.User;
+import com.slotswapper.backend.repository.UserAuthRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+    @Autowired
+    private UserAuthRepository userAuthRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+
+        User userFromDb = userAuthRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    System.out.println("Email not found: " + email);
+                    return new UsernameNotFoundException("User not found with username: " + email);
+                });
+
+
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(userFromDb.getEmail())
+                .password(userFromDb.getPassword())
+                .build();
+    }
+}

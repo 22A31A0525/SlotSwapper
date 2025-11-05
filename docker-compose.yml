@@ -1,0 +1,48 @@
+services:
+  # 1. PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: slot-postgres-db
+    ports:
+      # Maps host port 5433 to container port 5432.
+      # This avoids conflict if you have local Postgres running on 5432.
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: slotdb
+      POSTGRES_USER: slotuser
+      POSTGRES_PASSWORD: 123
+    volumes:
+      - slot-db-data:/var/lib/postgresql/data
+
+  # 2. Spring Boot Backend Service
+  backend:
+    build:
+      context: ./backend
+    container_name: slot-backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/slotdb
+      SPRING_DATASOURCE_USERNAME: slotuser
+      SPRING_DATASOURCE_PASSWORD: 123 # <-- Matches the DB password above
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+  # 3. React Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+    container_name: slot-frontend-ui
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  slot-db-data:
