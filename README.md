@@ -97,14 +97,42 @@ cd backend
 
 ## API Endpoints
 
-The backend provides RESTful endpoints for:
+The backend provides RESTful endpoints for managing events, swaps, and user authentication. All endpoints except authentication require JWT authentication via `Authorization: Bearer <token>` header.
 
-- **Authentication**: `/api/auth/login`, `/api/auth/signup`
-- **Events**: `/api/events` (CRUD operations)
-- **Swaps**: `/api/swaps` (Create and manage swap requests)
-- **Users**: User-related operations
+### Authentication Endpoints
 
-All endpoints (except auth) require JWT authentication via `Authorization: Bearer <token>` header.
+- `POST /auth/signup` - User registration
+  - Body: `{ "email": "string", "password": "string", "firstName": "string", "lastName": "string" }`
+  - Returns: `{ "token": "jwt-token" }`
+- `POST /auth/login` - User login
+  - Body: `{ "email": "string", "password": "string" }`
+  - Returns: `{ "token": "jwt-token" }`
+
+### Event Endpoints
+
+- `GET /api/events` - Get all events for the authenticated user
+  - Returns: Array of event objects
+- `POST /api/events` - Create a new event
+  - Body: `{ "title": "string", "description": "string", "startTime": "datetime", "endTime": "datetime" }`
+  - Returns: Created event object
+- `PUT /api/events/{id}/status` - Update event status
+  - Body: `{ "status": "BUSY|SWAPPABLE|CANCELLED" }`
+  - Returns: Updated event object
+
+### Swap Endpoints
+
+- `GET /api/swappable-slots` - Get all swappable events from other users
+  - Returns: Array of swappable event objects
+- `GET /api/swap-requests/incoming` - Get incoming swap requests for the user
+  - Returns: Array of swap request objects
+- `GET /api/swap-requests/outgoing` - Get outgoing swap requests from the user
+  - Returns: Array of swap request objects
+- `POST /api/swap-request` - Create a new swap request
+  - Body: `{ "mySlotId": number, "theirSlotId": number }`
+  - Returns: Created swap request object
+- `POST /api/swap-response/{requestId}` - Respond to a swap request
+  - Body: `{ "accepted": boolean }`
+  - Returns: Updated swap request object
 
 ## Project Structure
 
@@ -138,4 +166,3 @@ SlotSwapper/
         ├── services/           # API service layer
         └── ...
 ```
-
