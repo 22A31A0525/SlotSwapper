@@ -27,7 +27,6 @@ export default function MarketplacePage() {
     type: "",
   });
 
-  // 1. Load Marketplace on page load
   useEffect(() => {
     fetchMarketSlots();
   }, []);
@@ -41,11 +40,9 @@ export default function MarketplacePage() {
     }
   };
 
-  // 2. Open the modal and Find what I can offer
   const handleOpenSwapModal = async (targetSlot) => {
     setSelectedTarget(targetSlot);
     try {
-      // Reuse the generic events endpoint and filter frontend-side for simplicity
       const response = await api.get("/api/events");
       const mySwappables = response.data.filter(
         (e) => e.status === "SWAPPABLE"
@@ -57,10 +54,8 @@ export default function MarketplacePage() {
     }
   };
 
-  // 3. Send the final request to the backend
   const handleSendRequest = async (mySlotId) => {
     try {
-      // 1. Send the request to the backend
       await api.post("/api/swap-request", {
         mySlotId: mySlotId,
         theirSlotId: selectedTarget.id,
@@ -72,16 +67,13 @@ export default function MarketplacePage() {
       setMarketSlots((currentSlots) =>
         currentSlots.filter((slot) => slot.id !== selectedTarget.id)
       );
-      // ----------------
     } catch (error) {
       console.log(error);
       showNotification("Request failed. Someone might have taken it!", "error");
-      // If it failed, it's good practice to refresh the list to see the *real* current state
       fetchMarketSlots();
     }
   };
 
-  // Helper for showing alerts
   const showNotification = (message, type) => {
     setNotification({ show: true, message, type });
     setTimeout(

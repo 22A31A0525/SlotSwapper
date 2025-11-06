@@ -7,34 +7,60 @@ import {
   Box,
   Container,
   IconButton,
+  Badge,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardRounded";
 import StorefrontIcon from "@mui/icons-material/StorefrontRounded";
 import SwapHorizIcon from "@mui/icons-material/SwapHorizRounded";
 import LogoutIcon from "@mui/icons-material/LogoutRounded";
+import { useNotifications } from "./NotificationContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { notificationCount, clearNotifications } = useNotifications();
 
   const handleLogout = () => {
     localStorage.removeItem("jwt_token");
     navigate("/login");
   };
 
-  const NavButton = ({ to, icon, label }) => {
+  const handleRequestsClick = () => {
+    clearNotifications();
+    navigate("/requests");
+  };
+
+  const NavButton = ({ to, icon, label, isRequestsButton = false }) => {
     const isActive = location.pathname === to;
+
+    const onClickHandler = isRequestsButton
+      ? handleRequestsClick
+      : () => navigate(to);
+
+    const buttonIcon = isRequestsButton ? (
+      <Badge
+        badgeContent={notificationCount}
+        color="error"
+        max={99}
+        sx={{ "& .MuiBadge-badge": { top: 6, right: 0 } }}
+      >
+        {icon}
+      </Badge>
+    ) : (
+      icon
+    );
+
     return (
       <Button
-        startIcon={icon}
-        onClick={() => navigate(to)}
+        startIcon={buttonIcon}
+        onClick={onClickHandler}
         sx={{
           mx: 1,
-          px: 2, // Give it a bit more internal breathing room
+          px: 2,
           color: isActive ? "primary.main" : "text.secondary",
           bgcolor: isActive ? "rgba(108, 99, 255, 0.1)" : "transparent",
-          // THE FIX: Prevent text from wrapping onto two lines
           whiteSpace: "nowrap",
           minWidth: "auto",
           "&:hover": { bgcolor: "rgba(108, 99, 255, 0.05)" },
@@ -54,7 +80,6 @@ export default function Navbar() {
     >
       <Container maxWidth="lg">
         <Toolbar disableGutters sx={{ height: 70 }}>
-          {/* Logo / Brand Area */}
           <Box
             sx={{
               flexGrow: 1,
@@ -80,7 +105,6 @@ export default function Navbar() {
             </Typography>
           </Box>
 
-          {/* Navigation Links */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <NavButton
               to="/dashboard"
@@ -96,9 +120,9 @@ export default function Navbar() {
               to="/requests"
               icon={<SwapHorizIcon />}
               label="Requests"
+              isRequestsButton={true}
             />
-            <Box sx={{ width: 1, height: 30, bgcolor: "#eee", mx: 2 }} />{" "}
-            {/* Divider */}
+            <Box sx={{ width: 1, height: 30, bgcolor: "#eee", mx: 2 }} />
             <IconButton onClick={handleLogout} color="error" title="Logout">
               <LogoutIcon />
             </IconButton>

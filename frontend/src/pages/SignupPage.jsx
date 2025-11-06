@@ -20,20 +20,16 @@ export default function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      // Call the signup endpoint
       const response = await api.post("/auth/signup", {
         name,
         email,
         password,
       });
 
-      // The backend returns a token immediately upon signup
       localStorage.setItem("jwt_token", response.data.token);
 
-      // Go straight to the dashboard
       navigate("/dashboard");
     } catch (err) {
-      // Show a generic error message (e.g., if email is already taken)
       setError("Signup failed. Email may already be in use.");
     }
   };

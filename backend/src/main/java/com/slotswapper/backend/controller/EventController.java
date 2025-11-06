@@ -35,7 +35,7 @@ public class EventController {
     }
 
 
-    // Create a new event (defaults to BUSY status)
+    // Create a new event
     @PostMapping
     public ResponseEntity<EventResponseDTO> createEvent(@RequestBody CreateEventDTO createEventDTO) {
         EventResponseDTO newEvent = eventService.createEvent(createEventDTO, getCurrentUserEmail());
@@ -43,7 +43,7 @@ public class EventController {
     }
 
 
-    // Update an event's status (e.g., to make it SWAPPABLE)
+    // Update an event's status
     @PutMapping("/{id}/status")
     public ResponseEntity<EventResponseDTO> updateEventStatus(
             @PathVariable Long id,

@@ -21,7 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtFilter extends OncePerRequestFilter {
 
 
-    private final JwtUtils jwtUtils; // Make them final if using constructor injection
+    private final JwtUtils jwtUtils;
     private final CustomUserDetailsService customUserDetailsService;
 
 
@@ -46,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                // Ensure jwtUtils.extractUsername handles null/empty jwt gracefully, though it should be non-null here
+
                 username = jwtUtils.extractUsername(jwt);
             } catch (Exception e) {
                 System.err.println("Error extracting username from JWT: " + e.getMessage());

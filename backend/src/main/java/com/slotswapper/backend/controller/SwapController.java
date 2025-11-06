@@ -4,7 +4,6 @@ import com.slotswapper.backend.dto.CreateSwapRequestDTO;
 import com.slotswapper.backend.dto.EventResponseDTO;
 import com.slotswapper.backend.dto.SwapRequestResponseDTO;
 import com.slotswapper.backend.dto.SwapResponseDTO;
-import com.slotswapper.backend.model.SwapRequest;
 import com.slotswapper.backend.service.EventService;
 import com.slotswapper.backend.service.SwapService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,23 +31,40 @@ public class SwapController {
     }
 
 
+    //Get all available Swappable slots which is shown in frontend marketplace section
     @GetMapping("/swappable-slots")
     public ResponseEntity<List<EventResponseDTO>> getSwappableSlots() {
         return ResponseEntity.ok(eventService.getSwappableEvents(getCurrentUserEmail()));
     }
 
+    //Get all  slots which are requested by others to swap shown in frontend request section
     @GetMapping("/swap-requests/incoming")
     public ResponseEntity<List<SwapRequestResponseDTO>> getIncomingRequests() {
         return ResponseEntity.ok(swapService.getIncomingRequests(getCurrentUserEmail()));
     }
 
-
+    //Get all  slots which are requested by you to swap shown in frontend request section
     @GetMapping("/swap-requests/outgoing")
     public ResponseEntity<List<SwapRequestResponseDTO>> getOutgoingRequests() {
         return ResponseEntity.ok(swapService.getOutgoingRequests(getCurrentUserEmail()));
     }
 
+    // Requesting slot to exchange controller
+    @PostMapping("/swap-request")
+    public ResponseEntity<SwapRequestResponseDTO> createSwapRequest(@RequestBody CreateSwapRequestDTO requestDTO) {
 
+        String email = getCurrentUserEmail();
+
+        SwapRequestResponseDTO newRequest = swapService.createSwapRequest(
+                requestDTO.getMySlotId(),
+                requestDTO.getTheirSlotId(),
+                email
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(newRequest);
+    }
+
+    // Responding to requester regarding  slot  exchange controller
     @PostMapping("/swap-response/{requestId}")
     public ResponseEntity<SwapRequestResponseDTO> respondToSwap(
             @PathVariable Long requestId,
@@ -65,18 +81,5 @@ public class SwapController {
         return ResponseEntity.ok(updatedRequest);
     }
 
-    @PostMapping("/swap-request")
-    public ResponseEntity<SwapRequestResponseDTO> createSwapRequest(@RequestBody CreateSwapRequestDTO requestDTO) {
 
-        String email = getCurrentUserEmail();
-
-        SwapRequestResponseDTO newRequest = swapService.createSwapRequest(
-                requestDTO.getMySlotId(),
-                requestDTO.getTheirSlotId(),
-                email
-        );
-
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(newRequest);
-    }
 }

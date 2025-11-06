@@ -38,7 +38,7 @@ public class EventService {
         event.setTitle(dto.getTitle());
         event.setStartTime(dto.getStartTime());
         event.setEndTime(dto.getEndTime());
-        event.setStatus(EventStatus.BUSY); // New events are ALWAYS 'BUSY' first
+        event.setStatus(EventStatus.BUSY); // New events are ALWAYS 'BUSY'
         event.setUser(user); // Link the event to the logged-in user
 
         Event savedEvent = eventRepository.save(event);

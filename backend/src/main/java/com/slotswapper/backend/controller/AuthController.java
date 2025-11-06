@@ -15,14 +15,14 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-
+    // Account Creation Controller
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signUp(@RequestBody SignUpRequest request) {
         String token = authService.signUp(request);
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
-
+    // Account Login Controller
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         String token = authService.login(request);

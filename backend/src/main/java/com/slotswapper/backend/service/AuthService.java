@@ -28,6 +28,9 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
 
+    /**
+     * Handles User Creation.
+     */
     public String signUp(SignUpRequest request) {
 
         User user = new User();
@@ -35,9 +38,10 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
+        //save in DB
         userAuthRepository.save(user);
 
-
+        // Generate a JWT token for them
         String token = jwtUtils.getToken(request.getEmail());
 
         return token;
@@ -60,7 +64,7 @@ public class AuthService {
         User user = userAuthRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 3. Generate a JWT token for them
+        // Generate a JWT token for them
         String token = jwtUtils.getToken(request.getEmail());
 
         return token;

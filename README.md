@@ -1,15 +1,32 @@
 # SlotSwapper
 
-SlotSwapper is a full-stack web application designed for managing and swapping event slots or schedules. It allows users to create events, request swaps, and manage their schedules efficiently. The platform features user authentication, event management, and a marketplace for swap requests.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.java.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-19-blue)](https://reactjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 
-## Features
+SlotSwapper is a comprehensive full-stack web application for seamless event slot management and swapping. Empower users to create, organize, and trade schedule slots effortlessly, fostering efficient time management and collaboration.
 
-- **User Authentication**: Secure login and signup with JWT-based authentication.
-- **Event Management**: Create, view, and manage events with different statuses.
-- **Swap Requests**: Request and manage slot swaps between users.
-- **Marketplace**: Browse and interact with available swap opportunities.
-- **Responsive UI**: Modern React-based frontend with Material-UI components.
-- **RESTful API**: Backend API built with Spring Boot for robust data handling.
+## ✨ Features
+
+- 🔐 **Secure Authentication**: JWT-based login and registration system
+- 📅 **Event Management**: Create, view, and update event statuses (Busy/Swappable)
+- 🔄 **Swap Marketplace**: Browse and request slot exchanges with other users
+- 📱 **Responsive Design**: Modern UI built with Material-UI for optimal user experience
+- ⚡ **Real-time Notifications**: WebSocket-powered instant updates on swap activities
+- 🛠️ **RESTful API**: Robust backend with Spring Boot and PostgreSQL
+- 🐳 **Containerized**: Easy deployment with Docker and Docker Compose
+
+## 🛣️ Frontend Routes
+
+| Route          | Component       | Description                                |
+| -------------- | --------------- | ------------------------------------------ |
+| `/login`       | LoginPage       | User authentication portal                 |
+| `/signup`      | SignupPage      | New user registration form                 |
+| `/dashboard`   | DashboardPage   | Personal schedule management interface     |
+| `/marketplace` | MarketplacePage | Browse and initiate slot swap requests     |
+| `/requests`    | RequestsPage    | Manage incoming and outgoing swap requests |
 
 ## Technologies Used
 
@@ -96,6 +113,21 @@ cd backend
 ```
 
 ## API Endpoints
+
+## 📝 API Endpoints
+
+| Method | Endpoint | Description |
+|
+| `POST` | `/auth/signup` | Register a new user account |
+| `POST` | `/auth/login` | Authenticate and receive JWT |
+| `GET` | `/api/events` | Fetch current user's calendar |
+| `POST` | `/api/events` | Create a new busy slot |
+| `PUT` | `/api/events/{id}/status` | Update slot status (BUSY/SWAPPABLE) |
+| `GET` | `/api/swappable-slots` | View all available slots in marketplace |
+| `POST` | `/api/swap-request` | Initiate a trade request |
+| `GET` | `/api/swap-requests/incoming` | View requests received from others |
+| `GET` | `/api/swap-requests/outgoing` | View requests sent to others |
+| `POST` | `/api/swap-response/{id}` | Accept or Reject a pending request |
 
 The backend provides RESTful endpoints for managing events, swaps, and user authentication. All endpoints except authentication require JWT authentication via `Authorization: Bearer <token>` header.
 

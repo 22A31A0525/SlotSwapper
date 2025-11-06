@@ -19,7 +19,6 @@ import {
   Alert,
   Fade,
 } from "@mui/material";
-// Optional icons for a pro look
 import EventIcon from "@mui/icons-material/Event";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import api from "../services/api";

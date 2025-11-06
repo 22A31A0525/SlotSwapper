@@ -19,13 +19,10 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Call your backend API
       const response = await api.post("/auth/login", { email, password });
 
-      // Save the token!
       localStorage.setItem("jwt_token", response.data.token);
 
-      // Go to the dashboard
       navigate("/dashboard");
     } catch (err) {
       setError("Invalid email or password");

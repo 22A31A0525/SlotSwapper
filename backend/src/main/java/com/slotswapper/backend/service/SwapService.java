@@ -6,6 +6,7 @@ import com.slotswapper.backend.repository.EventRepository;
 import com.slotswapper.backend.repository.SwapRequestRepository;
 import com.slotswapper.backend.repository.UserAuthRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +17,22 @@ import java.util.stream.Collectors;
 @Service
 public class SwapService {
 
-    @Autowired private UserAuthRepository userRepository;
-    @Autowired private EventRepository eventRepository;
-    @Autowired private SwapRequestRepository swapRequestRepository;
+    @Autowired
+    private UserAuthRepository userRepository;
+    @Autowired
+    private EventRepository eventRepository;
+    @Autowired
+    private SwapRequestRepository swapRequestRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
 
-    // It makes sure that if *any* part of this method fails,
+    // Business logic regarding swap request thereafter request is stored in swap request table in DB
     @Transactional
     public SwapRequestResponseDTO createSwapRequest(Long mySlotId, Long theirSlotId, String requesterEmail) {
+        System.out.println("[DEBUG] Starting createSwapRequest for: " + requesterEmail); // LOG 1
 
-        // --- GET ALL THE PIECES ---
         User requester = userRepository.findByEmail(requesterEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -35,41 +42,45 @@ public class SwapService {
         Event desiredSlot = eventRepository.findById(theirSlotId)
                 .orElseThrow(() -> new RuntimeException("Desired slot not found"));
 
-        // --- THE "GATEKEEPER" LOGIC (VALIDATION) ---
-
-        //  Do I actually own the slot I am offering?
         if (!offeredSlot.getUser().getId().equals(requester.getId())) {
             throw new RuntimeException("Unauthorized: You do not own the slot you are offering.");
         }
-
-        //  Is the slot I'm offering *actually* swappable?
         if (offeredSlot.getStatus() != EventStatus.SWAPPABLE) {
             throw new RuntimeException("Your offered slot is not in a swappable state.");
         }
-
-        // Is the slot I *want* still available?
-
         if (desiredSlot.getStatus() != EventStatus.SWAPPABLE) {
             throw new RuntimeException("The desired slot is no longer available.");
         }
 
-        // --- GATEKEEPER PASSED. LOCK THE EVENTS. ---
         offeredSlot.setStatus(EventStatus.SWAP_PENDING);
         desiredSlot.setStatus(EventStatus.SWAP_PENDING);
-
         eventRepository.save(offeredSlot);
         eventRepository.save(desiredSlot);
 
-        // --- CREATE THE SWAP REQUEST RECORD ---
         SwapRequest swapRequest = new SwapRequest();
         swapRequest.setRequester(requester);
-        swapRequest.setResponder(desiredSlot.getUser()); // The owner of the desired slot
+        swapRequest.setResponder(desiredSlot.getUser());
         swapRequest.setOfferedSlot(offeredSlot);
         swapRequest.setDesiredSlot(desiredSlot);
         swapRequest.setStatus(SwapStatus.PENDING);
         SwapRequest savedRequest = swapRequestRepository.save(swapRequest);
 
-        // Step 2: Return the DTO, passing in the saved entity
+        //  NOTIFICATION LOGIC
+        String responderEmail = desiredSlot.getUser().getEmail();
+        System.out.println("[DEBUG] Attempting to send WS notification to: " + responderEmail); // LOG 2
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    responderEmail,
+                    "/queue/notifications",
+                    "NEW_REQUEST"
+            );
+            System.out.println("[DEBUG] WS Notification successfully SENT to: " + responderEmail); // LOG 3
+        } catch (Exception e) {
+            System.err.println("[ERROR] Failed to send WS notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+
         return new SwapRequestResponseDTO(savedRequest);
     }
 
@@ -89,14 +100,15 @@ public class SwapService {
     }
 
 
-    // Change the return type here from 'SwapRequest' to 'SwapRequestResponseDTO'
+    // Business Logic regarding swap(Acceptance,rejection) and update in Swap request table and change the slot
+    //state to Busy by Default
     @Transactional
     public SwapRequestResponseDTO respondToSwapRequest(Long requestId, boolean accepted, String responderEmail) {
-        // 1. GET THE REQUEST
+
         SwapRequest request = swapRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Swap request not found"));
 
-        // 2. SECURITY CHECK
+
         User responder = userRepository.findByEmail(responderEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -104,7 +116,7 @@ public class SwapService {
             throw new RuntimeException("Unauthorized: You are not the responder for this request.");
         }
 
-        // 3. CHECK STATUS
+
         if (request.getStatus() != SwapStatus.PENDING) {
             throw new RuntimeException("This request has already been processed.");
         }
@@ -112,35 +124,49 @@ public class SwapService {
         Event offeredSlot = request.getOfferedSlot();
         Event desiredSlot = request.getDesiredSlot();
 
+        // Prepare the notification message based on the action
+        String notificationMessage;
+
         if (accepted) {
             // --- ACCEPTED ---
             request.setStatus(SwapStatus.ACCEPTED);
-
-            User originalRequester = request.getRequester();
-            User originalResponder = request.getResponder();
-
             // Swap owners
-            offeredSlot.setUser(originalResponder);
-            desiredSlot.setUser(originalRequester);
-
+            offeredSlot.setUser(request.getResponder());
+            desiredSlot.setUser(request.getRequester());
             // Lock them back to BUSY
             offeredSlot.setStatus(EventStatus.BUSY);
             desiredSlot.setStatus(EventStatus.BUSY);
+
+            notificationMessage = "SWAP_ACCEPTED";
         } else {
             // --- REJECTED ---
             request.setStatus(SwapStatus.REJECTED);
             // Unlock them for others
             offeredSlot.setStatus(EventStatus.SWAPPABLE);
             desiredSlot.setStatus(EventStatus.SWAPPABLE);
+
+            notificationMessage = "SWAP_REJECTED";
         }
+
+        //  NOTIFICATION LOGIC
+        // We send this to the ORIGINAL REQUESTER to let them know the outcome.
+        String requesterEmail = request.getRequester().getEmail();
+        System.out.println("[DEBUG] Sending " + notificationMessage + " notification to: " + requesterEmail);
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    requesterEmail,
+                    "/queue/notifications",
+                    notificationMessage
+            );
+        } catch (Exception e) {
+            System.err.println("[ERROR] Failed to send response notification: " + e.getMessage());
+        }
+
 
         eventRepository.save(offeredSlot);
         eventRepository.save(desiredSlot);
         SwapRequest savedRequest = swapRequestRepository.save(request);
 
-        // Return the DTO
         return new SwapRequestResponseDTO(savedRequest);
     }
-
-
 }

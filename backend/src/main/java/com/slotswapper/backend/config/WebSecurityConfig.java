@@ -2,18 +2,14 @@ package com.slotswapper.backend.config;
 
 
 import com.slotswapper.backend.security.JwtFilter;
-import io.jsonwebtoken.Jwt;
-import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,8 +35,6 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         System.out.println("Configuring Security Filter Chain...");
 
-
-
         http
                 // 1. Enable CORS for Spring Security and link it to your corsConfigurationSource() bean
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -48,10 +42,8 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 // 3. Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-//                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-//                        .requestMatchers("/uploads/**").permitAll()
-//                        .requestMatchers("/ws/editor/**").permitAll()
+                        .requestMatchers("/auth/**","/ws/**").permitAll()
+//
                         .anyRequest().authenticated() // All other requests require authentication
                 )
                 // 4. Configure session management to be stateless (important for JWTs)
@@ -61,15 +53,15 @@ public class WebSecurityConfig {
 
         return http.build();
     }
+
+
     // This bean is for your controller to use to kick off the authentication process.
-    // Spring Boot automatically configures it if you have a UserDetailsService and PasswordEncoder.
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // RE-ADDED: Bean for Password Encoder
-    // We use BCrypt for strong password hashing
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -83,11 +75,12 @@ public class WebSecurityConfig {
 
         // Allow specified origin for development. In production, specify your frontend's URL(s).
         config.addAllowedOrigin(allowedOrigins);
+        config.addAllowedOrigin("http://localhost:5173/");
 
-        // Your React frontend's development URL
 
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allowed HTTP methods
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept")); // Allowed headers
+
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true); // Allow sending of cookies/authentication headers
         config.setMaxAge(3600L); // How long the pre-flight request can be cached (in seconds)
 
