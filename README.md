@@ -1,172 +1,144 @@
-# SlotSwapper
+# 🚀 SlotSwapper: Peer-to-Peer Time-Slot Scheduling
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Java](https://img.shields.io/badge/Java-21-orange)](https://openjdk.java.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-19-blue)](https://reactjs.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
+SlotSwapper is a full-stack web app built for the **ServiceHive technical challenge**. It lets users manage personal schedules, mark busy slots as **swappable**, and browse a **marketplace** to request peer-to-peer trades with other users. Swaps are handled atomically to avoid race conditions.
 
-SlotSwapper is a comprehensive full-stack web application for seamless event slot management and swapping. Empower users to create, organize, and trade schedule slots effortlessly, fostering efficient time management and collaboration.
+---
+
+## 🔗 Live Links
+
+- **Frontend (Vercel):** [https://slot-swapper-six.vercel.app/](https://slot-swapper-six.vercel.app/)
+- **Backend API (Render):** [https://slotswapper-api-itq5.onrender.com/](https://slotswapper-api-itq5.onrender.com/)
+
+---
 
 ## ✨ Features
 
-- 🔐 **Secure Authentication**: JWT-based login and registration system
-- 📅 **Event Management**: Create, view, and update event statuses (Busy/Swappable)
-- 🔄 **Swap Marketplace**: Browse and request slot exchanges with other users
-- 📱 **Responsive Design**: Modern UI built with Material-UI for optimal user experience
-- ⚡ **Real-time Notifications**: WebSocket-powered instant updates on swap activities
-- 🛠️ **RESTful API**: Robust backend with Spring Boot and PostgreSQL
-- 🐳 **Containerized**: Easy deployment with Docker and Docker Compose
+### Core (Completed)
 
-## 🛣️ Frontend Routes
+- **Secure Authentication:** Sign up & login with JWT for stateless sessions.
 
-| Route          | Component       | Description                                |
-| -------------- | --------------- | ------------------------------------------ |
-| `/login`       | LoginPage       | User authentication portal                 |
-| `/signup`      | SignupPage      | New user registration form                 |
-| `/dashboard`   | DashboardPage   | Personal schedule management interface     |
-| `/marketplace` | MarketplacePage | Browse and initiate slot swap requests     |
-| `/requests`    | RequestsPage    | Manage incoming and outgoing swap requests |
+- **Calendar Management:** Create, view, and update events (e.g., BUSY → SWAPPABLE).
 
-## Technologies Used
+- **Marketplace:** Browse other users’ swappable slots (`GET /api/swappable-slots`).
 
-### Backend
+- **Atomic Swap Logic:**
 
-- **Java 21**
-- **Spring Boot 3.5.7** (Web, Security, Data JPA)
-- **PostgreSQL** (Database)
-- **JWT** (Authentication)
-- **Lombok** (Code simplification)
-- **Maven** (Build tool)
+  - `POST /api/swap-request` locks both slots to `SWAP_PENDING`.
+  - `POST /api/swap-response` atomically swaps `userId` on both events using `@Transactional`.
 
-### Frontend
+- **Notifications UI:**
 
-- **React 19** (UI Framework)
-- **Vite** (Build tool and dev server)
-- **Material-UI (MUI)** (Component library)
-- **Redux Toolkit** (State management)
-- **Axios** (HTTP client)
-- **React Router** (Routing)
+  - Incoming requests (Accept / Reject)
+  - Outgoing requests (Pending)
 
-### Infrastructure
+### Bonus (Completed)
 
-- **Docker & Docker Compose** (Containerization)
-- **PostgreSQL 15-alpine** (Database container)
+- **Real-time Notifications:** WebSockets (STOMP)
+- **Deployment:** Vercel + Render
+- **Containerization:** Docker & Docker Compose
 
-## Prerequisites
+---
 
-Before running the application, ensure you have the following installed:
+## 🛠️ Tech Stack
 
-- **Docker** (version 20.10 or later)
-- **Docker Compose** (version 2.0 or later)
-- **Git** (for cloning the repository)
+| Layer     | Technology              | Why                                    |
+| --------- | ----------------------- | -------------------------------------- |
+| Backend   | Java (Spring Boot)      | Robust transactional business logic    |
+| Frontend  | React (Vite)            | Fast modern SPA tooling                |
+| Database  | PostgreSQL              | Strong ACID guarantees for swaps       |
+| State     | React Context           | Global notification badge state        |
+| Styling   | Material UI (MUI)       | Professional ready UI components       |
+| Real-time | WebSockets (STOMP)      | Instant peer notifications             |
+| DevOps    | Docker / Docker Compose | Consistent environment and quick setup |
 
-## Installation & Setup
+---
 
-1. **Clone the repository**:
+## 🧪 Run Locally
 
-   ```bash
-   git clone <repository-url>
-   cd SlotSwapper
-   ```
+### Prerequisites
 
-2. **Environment Variables** (Optional):
+- Docker Desktop 20.10+
+- Git
 
-   - The application uses default configurations in `docker-compose.yml`.
-   - For production, consider setting environment variables for sensitive data like database credentials.
-
-3. **Build and run with Docker Compose**:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-   This will:
-
-   - Start a PostgreSQL database on port 5433
-   - Build and run the Spring Boot backend on port 8080
-   - Build and run the React frontend on port 5173
-
-## Running the Application
-
-Once the containers are up:
-
-- **Frontend**: Access at `http://localhost:5173`
-- **Backend API**: Available at `http://localhost:8080`
-- **Database**: PostgreSQL running on `localhost:5433` (user: slotuser, password: 123, db: slotdb)
-
-### Development Mode
-
-For frontend development without Docker:
+### Steps
 
 ```bash
-cd frontend
-npm install
-npm run dev
+git clone https://github.com/22A31A0525/SlotSwapper
+cd SlotSwapper
+
+docker-compose up --build
 ```
 
-For backend development:
+### Local URLs
 
-```bash
-cd backend
-./mvnw spring-boot:run
+- **Frontend:** [http://localhost:5173](http://localhost:5173)
+- **Backend:** [http://localhost:8080](http://localhost:8080)
+- **Postgres:** `localhost:5433`
+
+  - User: `slotuser`
+  - Pass: `123`
+  - DB: `slotdb`
+
+---
+
+## 🔐 Authentication
+
+All endpoints (except `/auth/**`) require:
+
+```
+Authorization: Bearer <token>
 ```
 
-## API Endpoints
+| Method | Endpoint     | Description         |
+| ------ | ------------ | ------------------- |
+| POST   | /auth/signup | Register a new user |
+| POST   | /auth/login  | Login & obtain JWT  |
 
-## 📝 API Endpoints
+---
 
-| Method | Endpoint | Description |
-|
-| `POST` | `/auth/signup` | Register a new user account |
-| `POST` | `/auth/login` | Authenticate and receive JWT |
-| `GET` | `/api/events` | Fetch current user's calendar |
-| `POST` | `/api/events` | Create a new busy slot |
-| `PUT` | `/api/events/{id}/status` | Update slot status (BUSY/SWAPPABLE) |
-| `GET` | `/api/swappable-slots` | View all available slots in marketplace |
-| `POST` | `/api/swap-request` | Initiate a trade request |
-| `GET` | `/api/swap-requests/incoming` | View requests received from others |
-| `GET` | `/api/swap-requests/outgoing` | View requests sent to others |
-| `POST` | `/api/swap-response/{id}` | Accept or Reject a pending request |
+## 📅 Event Management
 
-The backend provides RESTful endpoints for managing events, swaps, and user authentication. All endpoints except authentication require JWT authentication via `Authorization: Bearer <token>` header.
+| Method | Endpoint                | Description          |
+| ------ | ----------------------- | -------------------- |
+| GET    | /api/events             | Get your events      |
+| POST   | /api/events             | Create busy event    |
+| PUT    | /api/events/{id}/status | Set BUSY / SWAPPABLE |
 
-### Authentication Endpoints
+---
 
-- `POST /auth/signup` - User registration
-  - Body: `{ "email": "string", "password": "string", "firstName": "string", "lastName": "string" }`
-  - Returns: `{ "token": "jwt-token" }`
-- `POST /auth/login` - User login
-  - Body: `{ "email": "string", "password": "string" }`
-  - Returns: `{ "token": "jwt-token" }`
+## 🔁 Swap Logic
 
-### Event Endpoints
+| Method | Endpoint                    | Description            |
+| ------ | --------------------------- | ---------------------- |
+| GET    | /api/swappable-slots        | View marketplace items |
+| POST   | /api/swap-request           | Initiate trade         |
+| GET    | /api/swap-requests/incoming | Incoming requests      |
+| GET    | /api/swap-requests/outgoing | Outgoing requests      |
+| POST   | /api/swap-response/{id}     | Accept / Reject swap   |
 
-- `GET /api/events` - Get all events for the authenticated user
-  - Returns: Array of event objects
-- `POST /api/events` - Create a new event
-  - Body: `{ "title": "string", "description": "string", "startTime": "datetime", "endTime": "datetime" }`
-  - Returns: Created event object
-- `PUT /api/events/{id}/status` - Update event status
-  - Body: `{ "status": "BUSY|SWAPPABLE|CANCELLED" }`
-  - Returns: Updated event object
+**Atomic Guarantee:** Entire swap succeeds or rolls back.
 
-### Swap Endpoints
+---
 
-- `GET /api/swappable-slots` - Get all swappable events from other users
-  - Returns: Array of swappable event objects
-- `GET /api/swap-requests/incoming` - Get incoming swap requests for the user
-  - Returns: Array of swap request objects
-- `GET /api/swap-requests/outgoing` - Get outgoing swap requests from the user
-  - Returns: Array of swap request objects
-- `POST /api/swap-request` - Create a new swap request
-  - Body: `{ "mySlotId": number, "theirSlotId": number }`
-  - Returns: Created swap request object
-- `POST /api/swap-response/{requestId}` - Respond to a swap request
-  - Body: `{ "accepted": boolean }`
-  - Returns: Updated swap request object
+## 🔔 Real-time Notifications
 
-## Project Structure
+| Protocol  | Endpoint                  | Purpose                |
+| --------- | ------------------------- | ---------------------- |
+| WS        | /ws                       | WebSocket connect      |
+| SUBSCRIBE | /user/queue/notifications | Receive private alerts |
+
+---
+
+## 🧩 Design Highlights
+
+- Users identified by numeric `id`, not email.
+- `@Transactional` ensures safe swap consistency.
+- WebSocket sessions authenticated via JWT in `STOMP CONNECT`.
+- Split deployment: Vercel (frontend) + Render (backend & DB).
+
+---
+
+## 📂 Project Structure
 
 ```
 SlotSwapper/
@@ -197,4 +169,5 @@ SlotSwapper/
         ├── pages/              # Page components
         ├── services/           # API service layer
         └── ...
+
 ```
